@@ -4,17 +4,29 @@ const SERVER_STATUS_URL =
   "https://hoyuhwgv9l.execute-api.ap-southeast-2.amazonaws.com/status";
 
 let intervalId;
+let running = false;
 
-window.onload = async () => {
-  try {
-    const runningStatus = await startServer();
-    console.log(runningStatus);
-  } catch (err) {
-    console.error(err);
-    document.getElementById("error-area").innerText =
-      "Something went wrong, try refreshing the page. If that doesn't work talk to George. Error is:" +
-      JSON.stringify(err);
-  }
+window.onload = () => {
+  document.getElementById("check-status-button").onclick = async () => {
+    if (running) {
+      console.log("already running");
+      return false;
+    }
+    try {
+      running = true;
+      const runningStatus = await startServer();
+      console.log(runningStatus);
+    } catch (err) {
+      console.error(err);
+      document.getElementById("error-area").innerText =
+        "Something went wrong, try refreshing the page. If that doesn't work talk to George. Error is:" +
+        JSON.stringify(err);
+    } finally {
+      running = false;
+    }
+
+    return true;
+  };
 };
 
 async function startServer() {
