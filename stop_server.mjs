@@ -1,3 +1,5 @@
+"use strict";
+
 import net from "node:net";
 import {
   EC2Client,
@@ -51,6 +53,7 @@ const getInstanceInfo = async () => {
 
 const serverIsEmpty = async (address, port, password) => {
   let client = net.connect(port, address);
+  let response = undefined;
   const authRequest = createRequest(3, 1, password);
   [client, response] = await sendRequest(client, authRequest);
   if (response.id < 0) throw Error("Could not Authenticate");
