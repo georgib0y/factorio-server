@@ -1,8 +1,6 @@
 const SERVER_POLL_INTERVAL_MS = 5000;
 
-const SERVER_STATUS_URL = "https://hoyuhwgv9l.execute-api.ap-southeast-2.amazonaws.com/status";
-
-const SERVER_START_URL = "https://hoyuhwgv9l.execute-api.ap-southeast-2.amazonaws.com/start";
+const API_URL = "https://hoyuhwgv9l.execute-api.ap-southeast-2.amazonaws.com";
 
 window.onload = async () => {
   document.getElementById("start-instance-button").onclick = startInstance;
@@ -13,7 +11,7 @@ window.onload = async () => {
 
 async function checkServerStatus() {
   console.log("checking status");
-  const res = await fetch(SERVER_STATUS_URL);
+  const res = await fetch(API_URL + "/status");
 
   if (!res.ok) {
     handleError(`Could not connect to check-server lambda: ${res.status}`);
@@ -22,11 +20,6 @@ async function checkServerStatus() {
 
   const data = await res.json();
   console.log(`got response: ${data}`);
-
-  if (data.statusCode !== 200) {
-    handleError(data.error);
-    return false;
-  }
 
   document.getElementById("server-status").innerText = data.State;
   document.getElementById("server-ip").innerText = data.PublicIpAddress ?? "Not assigned yet.";
@@ -39,7 +32,7 @@ async function startInstance() {
   console.log("starting server");
 
   try {
-    const res = await fetch(SERVER_START_URL);
+    const res = await fetch(API_URL + "/start");
 
     if (!res.ok) {
       handleError(`Could not connect to start-server lambda: ${res.status}`);
