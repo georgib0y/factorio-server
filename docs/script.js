@@ -23,7 +23,7 @@ async function checkServerStatus() {
 
   document.getElementById("server-status").innerText = data.State;
   document.getElementById("server-ip").innerText = data.PublicIpAddress ?? "Not assigned yet.";
-  document.getElementById("start-instance-area").hidden = data.State === "stopped";
+  document.getElementById("start-instance-area").hidden = data.State !== "stopped";
 
   return true;
 }
