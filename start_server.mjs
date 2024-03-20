@@ -1,52 +1,54 @@
 "use strict";
 
-import {
-  EC2Client,
-  DescribeInstancesCommand,
-  StartInstancesCommand,
-} from "@aws-sdk/client-ec2";
+import { EC2Client, DescribeInstancesCommand, StartInstancesCommand } from "@aws-sdk/client-ec2";
 
-const instanceSelector = { InstanceIds: [process.env.EC2_ID] };
+const instanceSelector = {
+  InstanceIds: [process.env.EC2_ID],
+};
 
 const client = new EC2Client({
   reigon: "ap-southeast-2",
 });
 
-const describeInstance = async () => {
+const instanceIsStopped = async () => {
   const desc_cmd = new DescribeInstancesCommand(instanceSelector);
   const res = await client.send(desc_cmd);
   const info = res.Reservations[0].Instances[0];
 
-  return {
-    State: info.State.Name,
-    PublicIpAddress: info.PublicIpAddress ?? null,
-  };
+  if (!info) {
+    throw new Error(`Could not get instance for id="${process.env.EC2_ID}"`);
+  }
+
+  return info.State.Name === "stopped";
 };
 
 const startInstance = async () => {
   const start_cmd = new StartInstancesCommand(instanceSelector);
-  return await client.send(start_cmd);
+  const res = await client.send(start_cmd);
+  return res.StartingInstances.map((i) => i.InstanceId).includes(process.env.EC2_ID) ?? false;
 };
 
 export const handler = async () => {
+  let started = false;
   try {
-    const info = await describeInstance();
-
-    if (info.State === "stopped") {
-      await startInstance();
-      info.starting = true;
+    if (await instanceIsStopped()) {
+      started = await startInstance();
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify(info),
+      body: JSON.stringify({
+        started: started,
+      }),
     };
   } catch (err) {
     console.error(err);
 
     return {
       statusCode: err.httpStatusCode ?? 500,
-      body: "An error occured in start server",
+      body: JSON.stringify({
+        error: "An error occured in start-server, check logs for info",
+      }),
     };
   }
 };
